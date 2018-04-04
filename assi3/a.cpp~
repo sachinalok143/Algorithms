@@ -1,0 +1,228 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <math.h>
+#include <string.h>
+struct NODE;
+struct TREE;
+
+typedef struct NODE
+{
+  struct NODE* l;
+  struct NODE* r;
+  struct NODE* p;
+  int key;
+}node;
+typedef struct TREE
+{
+  node *root;
+  int m,n;	
+}tree;
+
+node* create_node()
+{
+  node *A=(node*)malloc(sizeof(node));
+  A->l=(node*)malloc(sizeof(node));
+  A->l=NULL;
+  A->r=(node*)malloc(sizeof(node));
+  A->r=NULL;
+  A->r=(node*)malloc(sizeof(node));
+  A->p=NULL;
+  A->key=0;
+  return A;
+}
+
+//node* T=create_node();
+tree* create_tree()
+{
+  tree* T=(tree*)malloc(sizeof(tree));
+  T->m=0;
+  T->n=0;
+  T->root=create_node();
+  T->root=NULL;
+  return T;
+}
+
+int size(node *k)
+{
+  node *current=create_node();
+  current=k;
+  if(current==NULL)return 1;
+  printf("[[[[[[\n");
+  return size(current->l)+size(current->r);
+}
+int height(node *k){
+  if(k==NULL)return 1;
+  if(height(k->l)>height(k->r))return height(k->l)+1;else return height(k->r)+1;
+}
+void inorder(node *k)
+{
+  if(k==NULL)return;
+  inorder(k->l);
+  printf("%d\t",k->key);
+  inorder(k->r);
+}
+void inorder_store(node* k,int* A,int i){
+  if(k==NULL)return;
+  inorder_store(k->l,A,--i);
+  A[i]=k->key;
+  inorder_store(k->r,A,++i);
+}
+
+
+void destroy(node* v)
+{
+  if(v==NULL)return;
+  destroy(v->l);
+  destroy(v->r);
+  free(v);
+}
+node* build(int *A,int s,int i)
+{
+  if(i>=0&&i<s){
+    node* N=create_node();
+    N->key=A[i];
+    N->l=build(A,s,--i);
+    N->r=build(A,s,++i);
+    (N->l)->p=N;
+    (N->r)->p=N;
+    return N;
+  }
+}
+node * rebuild(node *v,int s){
+  int *A=(int*)malloc(s*sizeof(int));
+  inorder_store(v,A,0);
+  destroy(v);
+  tree* T=create_tree();
+  T->m=s;
+  T->n=s;
+  T->root=build(A,s,(int)s/2);
+  return T->root;
+}
+node* search(node* N,int x){
+  if(N==NULL) return NULL;
+  if(N->key==x)return N;
+  if(search(N->l,x)!=NULL||search(N->r,x)!=NULL)
+    {
+      if(search(N->l,x)!=NULL)return search(N->l,x);
+      else if(search(N->r,x)!=NULL) search(N->r,x);
+      else return NULL;
+    }
+}
+void insert_x(node* T,int x,int *n,int *m,int *i){
+  if(T){
+  (*i)++;
+  node* A=create_node();
+ if(x<=T->key)
+    {
+      if(T->l==NULL)
+     {
+   node* N=create_node();
+   N->key=x;
+   T->l=N;
+   N->p=T;
+   (*n)++; 
+    }
+      else 
+  insert_x(T->l,x,n,m,i);
+    }
+  printf("*****\n");
+  if(x>T->key)
+    {
+      if(T->r==NULL)
+  {
+   node* N=create_node();
+   N->key=x;
+   T->r=N;
+   N->p=T;
+   (*n)++; 
+  }
+      else 
+  insert_x(T->r,x,n,m,i);
+    }
+     printf("+++++\n");
+  if((*n)>(*m))(*m)++;
+  }
+}
+void balence(node* N)
+{
+  node* A=create_node();
+  A=N;
+  if(A->p==NULL)return;
+  printf(";;;;;;;;;;;\n");
+  int m=(2/3)*size(A);
+  if(size(A->l)>m||size(A->r)>m);
+  // N=rebuild(A,size(A));
+  //balence(N->l);
+  //balence(N->r);
+}
+void insert(tree* T,int x,int *n,int *m){
+ if(search(T->root,x)) return;
+  int i=0;
+  insert_x(T->root,x,n,m,&i);
+  int k=size(T->root);
+ if(i>(int)(1+(log(k)/log(3/2))))balence(T->root);
+}
+node* find_min(node* N){
+  if(N->l==NULL) return N;
+  else return find_min(N->l);
+}
+
+void Delete(node* N)
+{
+  if(N->l==NULL&&N->r==NULL)
+    {
+      if(N==(N->p)->r)N->r=NULL;
+      else if(N==(N->p)->l)N->l=NULL;
+      free(N);
+    }
+  else if(N->r!=NULL&&N->l==NULL)
+    {
+      node* W=create_node();
+      W=N->r;
+      if(N==(N->p)->r)(W->p)->r=W;
+      else if(N==(N->p)->l)(W->p)->l=W;
+      free(N);
+    }
+  else if(N->l!=NULL&&N->r==NULL)
+    {
+      node* W=create_node();
+      W=N->l;
+      if(N==(N->p)->r)(W->p)->r=W;
+      else if(N==(N->p)->l)(W->p)->l=W;
+      free(N);
+    }
+  else if(N->l!=NULL&&N->r!=NULL)
+    {
+      node* W=create_node();
+      W=find_min(N->r);
+      (N->p)->key=W->key;
+	     Delete(W);
+    }
+}
+void deleteKey(tree* T,int x,int *n,int *m) {
+  if(search(T->root,x))
+    {	
+      (*n)--;
+      node* N=create_node();
+      N=search(T->root,x);
+      Delete(N);
+      if((*n)>(2/3)*(*m))rebuild(T->root,size(T->root));
+    }
+}
+
+int main(int argc, char const *argv[])
+{
+	tree* T=create_tree();
+  int i,nsml,k;
+  int n=0,m=0;
+  scanf("%d",&nsml);
+  printf("nsml-%d\n",nsml );
+  for(i=0;i<nsml;i++){
+    scanf("%d",&k);
+    printf("\n+++insert(%d):\t",k);
+    insert(T,k,&n,&m);
+    inorder(T->root);
+  }
+  return 0;
+}

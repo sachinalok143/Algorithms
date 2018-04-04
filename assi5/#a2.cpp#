@@ -1,0 +1,111 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <stdbool.h>
+
+char EMPTY[] ="EMPTY";
+
+typedef struct {
+	char x[21], y[21]; /* Pair of NULL-terminated strings */
+} pair;
+
+
+typedef struct {
+	char att[21]; /* The attribute name: a NULL-terminated string */
+	int nassoc; /* Number of attribute associations in the other table */
+	int assoc[10];
+}node;
+
+
+typedef struct {
+	int S; /* Size of A and B */
+	node *A, *B; /* Attribute arrays */
+}hashtable;
+
+bool cmp_srt(char *a,char* b){
+	if(strlen(a)!=strlen(b))return false;
+	int i;
+	int l= strlen(a);
+	for (i= 0; i<l; i++)
+		if(a[i]!=b[i])
+			return false;
+	return true;
+}
+node* create_node()
+{
+	node* N=(node*)malloc(sizeof(node));
+	strcpy(N->att,EMPTY);
+	N->nassoc=0;
+	for (int i = 0; i < 10; ++i)*(N->assoc+i)=0;
+	return N;
+}
+
+int Hs(char *Z,int s,int i)
+{
+	if(i<0)return 0;
+	else{
+		i--;
+		return (128*(Hs(Z,s,i))+(int)Z[i])% s;}
+}
+
+
+
+
+
+
+int main()
+{
+	int s;
+	scanf("%d",&s);
+	hashtable T=inittable(s);
+	int k;
+	scanf("%d",&k);
+	char z[21];
+	char x[21],y[21];
+	pair *P=(pair*)malloc(sizeof(pair));
+	while(k)
+		{
+			switch(k)
+				{
+				case 1:
+					scanf("%s",z);
+					printf("\n+++Enter choice: 1  %s\n",z);
+					searchattr(T,z,1);
+					break;
+				case 2:
+					scanf("%s",z);
+					printf("\n+++Enter choice: 2  %s\n",z);
+					searchattr(T,z,2);
+					break;
+				case 3:
+					scanf("%s%s",x,y);
+					printf("\n+++Enter choice: 3  %s   %s\n",x,y);
+					strcpy(P->x,x);
+					strcpy(P->y,y);
+					searchpair(T,*P);
+					break;
+				case 4:
+					scanf("%s%s",x,y);
+					printf("\n+++Enter choice: 4   %s   %s\n",x,y);
+					strcpy(P->x,x);
+					strcpy(P->y,y);
+					insertpair(T,P);
+					break;
+				case 5:
+					scanf("%s%s",x,y);
+					printf("\n+++Enter choice: 5  %s   %s\n",x,y);
+					strcpy(P->x,x);
+					strcpy(P->y,y);
+					deletepair(T,*P);
+					break;
+				default:;
+
+				}
+
+			scanf("%d",&k);
+		}
+	hashtable H=inittable(10);
+	printf("%s\n",H.A[5].att);
+	return 0;
+}

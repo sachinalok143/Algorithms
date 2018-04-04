@@ -1,0 +1,260 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <stdbool.h>
+
+char EMPTY[] ="EMPTY";
+
+typedef struct {
+	char x[21], y[21]; /* Pair of NULL-terminated strings */
+} pair;
+
+
+typedef struct {
+	char att[21]; /* The attribute name: a NULL-terminated string */
+	int nassoc; /* Number of attribute associations in the other table */
+	int assoc[10];
+}node;
+
+
+typedef struct {
+	int S; /* Size of A and B */
+	node *A, *B; /* Attribute arrays */
+}hashtable;
+
+bool cmp_srt(char *a,char* b){
+	if(strlen(a)!=strlen(b))return false;
+	int i;
+	int l= strlen(a);
+	for (i= 0; i<l; i++)
+		if(a[i]!=b[i])
+			return false;
+	return true;
+}
+node* create_node()
+{
+	node* N=(node*)malloc(sizeof(node));
+	strcpy(N->att,EMPTY);
+	N->nassoc=0;
+	for (int i = 0; i < 10; ++i)*(N->assoc+i)=0;
+	return N;
+}
+
+int Hs(char *Z,int s,int i)
+{
+	if(i<0)return 0;
+	else{
+		i--;
+		return (128*(Hs(Z,s,i))+(int)Z[i])% s;}
+}
+hashtable inittable(int s)
+{
+	hashtable* H=(hashtable*)malloc(sizeof(hashtable));
+	node* K=(node*)malloc(s*sizeof(node));
+	node* L=(node*)malloc(s*sizeof(node));
+	for (int i = 0; i < s; ++i)
+		{
+			K[i]=*create_node();
+			L[i]=*create_node();
+		}
+	H->A=K;
+	H->B=L;
+	H->S=s;
+	return *H;
+}
+
+void searchpair(hashtable T,pair P)
+{
+	bool N=false;
+	int i=Hs(P.x,T.S,strlen(P.x));
+	int l=i;
+	l--;
+
+	while(!cmp_srt(T.A[i%T.S].att,EMPTY)||!cmp_srt(T.A[i%(T.S)].att,P.x))
+		{
+			if(i==l)break;
+			if(cmp_srt(T.A[i%T.S].att,P.x))
+				{
+					for (int k = 0; k < T.A[i%T.S].nassoc; ++k)
+						{
+							if(cmp_srt(T.B[T.A[i%T.S].assoc[k]].att,P.y))N=true;
+
+						}
+					/*int j=Hs(P.x,T.S,strlen(P.x));
+					  while(!cmp_srt(T.A[j].att,"EMPTY"))
+					  {
+					  if(cmp_srt(T.A[i].att,P.x)) N=true;
+					  else j++;
+					  }*/
+
+				}
+			i++;
+			i=i%T.S;
+		}
+	if(N)printf("(%s,%s) found\n",P.x,P.y);
+	else printf("(%s,%s) not found.\n",P.x,P.y);
+}
+
+void searchattr(hashtable T,char *z,int a)
+{
+	if(a==1)
+		{
+			printf("\n(%s,-)is associated with:  ",z);
+			int i=Hs(z,T.S,strlen(z));
+			//printf("%d\n", i);
+			int l=i;
+			l--;
+			while(!cmp_srt(T.A[i%(T.S)].att,EMPTY)||!cmp_srt(T.A[i%(T.S)].att,z))
+				{	if(i==l)break;
+					if(cmp_srt(T.A[i%T.S].att,z))//printf("%d\n",i );
+						{
+							for (int k = 0; k < T.A[i%T.S].nassoc; ++k)
+								{
+									//printf("%d\n",k );
+								printf("%s\t",T.B[T.A[i%T.S].assoc[k]].att);
+								}	
+								break;
+						}
+				i++;
+				i=i%T.S;
+				}
+		}
+	if(a==2)
+		{
+			printf("\n(-,%s)is associated with:  ",z);
+			int i=Hs(z,T.S,strlen(z));
+			int l=i;
+			l--;
+			while(!cmp_srt(T.B[i%(T.S)].att,EMPTY)||!cmp_srt(T.B[i%(T.S)].att,z))
+				{
+					if(i==l)break;
+					if(cmp_srt(T.B[i%T.S].att,z))
+						{
+							for (int k = 0; k < T.B[i%T.S].nassoc; ++k)
+								{
+									printf("%s\t",T.A[T.B[i%T.S].assoc[k]].att);
+								}
+								break;
+						}
+				i++;
+				i=i%T.S;
+				}
+		}
+}
+
+hashtable insertpair(hashtable T,pair *P)
+{
+	int i=Hs(P->x,T.S,strlen(P->x));
+	int j=Hs(P->y,T.S,strlen(P->y));
+	int l=i;
+	l--;
+	int m=j;
+	m--;
+	//printf("%d  %d\n",m,j);
+	printf("\t hash-(%d,%d)\t",i,j);
+	while(!cmp_srt(T.A[i%(T.S)].att,EMPTY)&&!cmp_srt(T.A[i%(T.S)].att,P->x)){if(i==l)break;i++;i=i%T.S;}
+	strcpy(T.A[i%(T.S)].att,P->x);
+	  /*else if(cmp_srt(T.A[i%(T.S)].att,P->x))*/
+	///strcpy(T.A[i%(T.S)].att,P->x);
+
+	while(!cmp_srt(T.B[j%(T.S)].att,EMPTY)&&!cmp_srt(T.B[j%(T.S)].att,P->y)){if(j==m)break;j++;j=j%T.S;}
+	strcpy(T.B[j%(T.S)].att,P->y);
+	printf("\t insertion at-(%d,%d)\n",i,j);
+	T.A[i%(T.S)].assoc[T.A[i%(T.S)].nassoc]=j%(T.S);
+	T.A[i%(T.S)].nassoc++;
+	T.B[j%(T.S)].assoc[T.B[j%(T.S)].nassoc]=i%(T.S);
+	T.B[j%(T.S)].nassoc++;
+	return T;
+
+}
+
+
+hashtable deletepair(hashtable T,pair P) 
+{
+	char DELETED[]="DELETED";
+	int i=Hs(P.x,T.S,strlen(P.x));
+	int l=i;
+	l--;
+	int j=Hs(P.y,T.S,strlen(P.y));
+	printf("\t hash-(%d,%d)\t",i,j);
+	do
+		{
+			if(cmp_srt(T.A[i%(T.S)].att,P.x))
+				{
+					for (int k = 0; k < T.A[i%(T.S)].nassoc; ++k)
+						{
+							if(cmp_srt(T.B[T.A[i%(T.S)].assoc[k]].att,P.y))
+								{
+									T.B[T.A[i%(T.S)].assoc[k]].nassoc--;
+									if(T.B[T.A[i%(T.S)].assoc[k]].nassoc==0)
+										strcpy(T.B[T.A[i%(T.S)].assoc[k]].att,DELETED);
+									T.A[i].nassoc--;
+									if(T.A[i%(T.S)].nassoc==0)
+										strcpy(T.A[i%(T.S)].att,DELETED);
+									printf("\tdeletion at:(%d,%d)\n",i%(T.S),T.A[i%(T.S)].assoc[k]);
+									break;
+								}
+						}
+					break;
+				}
+			i++;
+		}
+while(!cmp_srt(T.A[i%(T.S)].att,EMPTY)||i!=l);
+	return T;
+}
+int main()
+{
+	int s;
+	scanf("%d",&s);
+	hashtable T=inittable(s);
+	int k;
+	scanf("%d",&k);
+	char z[21];
+	char x[21],y[21];
+	pair *P=(pair*)malloc(sizeof(pair));
+	while(k)
+		{
+			switch(k)
+				{
+				case 1:
+					scanf("%s",z);
+					printf("\n+++Enter choice: 1  %s\n",z);
+					searchattr(T,z,1);
+					break;
+				case 2:
+					scanf("%s",z);
+					printf("\n+++Enter choice: 2  %s\n",z);
+					searchattr(T,z,2);
+					break;
+				case 3:
+					scanf("%s%s",x,y);
+					printf("\n+++Enter choice: 3  %s   %s\n",x,y);
+					strcpy(P->x,x);
+					strcpy(P->y,y);
+					searchpair(T,*P);
+					break;
+				case 4:
+					scanf("%s%s",x,y);
+					printf("\n+++Enter choice: 4   %s   %s\n",x,y);
+					strcpy(P->x,x);
+					strcpy(P->y,y);
+					insertpair(T,P);
+					break;
+				case 5:
+					scanf("%s%s",x,y);
+					printf("\n+++Enter choice: 5  %s   %s\n",x,y);
+					strcpy(P->x,x);
+					strcpy(P->y,y);
+					deletepair(T,*P);
+					break;
+				default:;
+
+				}
+
+			scanf("%d",&k);
+		}
+	hashtable H=inittable(10);
+	printf("%s\n",H.A[5].att);
+	return 0;
+}
